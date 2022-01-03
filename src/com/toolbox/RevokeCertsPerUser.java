@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Scanner;
 
 public class RevokeCertsPerUser {
-    //Muestra la versión de la instancia EJBCA a la que conecta.
+    //Muestra los certificados de un usuario, y permite seleccionar uno para ser revocado.
     public static void main(String[] args) throws MalformedURLException, EjbcaException_Exception, AuthorizationDeniedException_Exception, CertificateException, CADoesntExistsException_Exception {
 
         //Iniciar Conexión con EJBCA

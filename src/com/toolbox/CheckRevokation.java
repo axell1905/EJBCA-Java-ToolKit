@@ -9,7 +9,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 public class CheckRevokation {
-    //Muestra la versión de la instancia EJBCA a la que conecta.
+    //Revisa el estado de revocación de un certificado.
     public static void main(String[] args) throws MalformedURLException, CADoesntExistsException_Exception, EjbcaException_Exception, AuthorizationDeniedException_Exception {
 
         //Iniciar Conexión con EJBCA
