@@ -40,7 +40,7 @@ public class SearchCertsByUser {
         //================================================================================
 
         //El boolean indica si queremos obviar los certificados revocados y expirados
-        List<Certificate> foundcertificates = ejbcaraws.findCerts("testrazones", false);
+        List<Certificate> foundcertificates = ejbcaraws.findCerts("tomcat", false);
         System.out.println("Certificados encontrados: "+foundcertificates.size());
         Iterator it = foundcertificates.iterator();
         int i=0;
