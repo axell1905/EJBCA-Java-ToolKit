@@ -10,7 +10,7 @@ import java.net.URL;
 import java.util.List;
 
 public class GetAvailableCA {
-    //Muestra la versión de la instancia EJBCA a la que conecta.
+    //Muestra la lista de CAs disponibles de la instancia EJBCA a la que conecta.
     public static void main(String[] args) throws MalformedURLException, EjbcaException_Exception, AuthorizationDeniedException_Exception {
 
         //Iniciar Conexión con EJBCA
