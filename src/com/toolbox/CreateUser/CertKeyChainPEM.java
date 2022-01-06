@@ -1,6 +1,7 @@
 package com.toolbox.CreateUser;
 
 import org.apache.log4j.BasicConfigurator;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
@@ -16,19 +17,21 @@ import org.ejbca.core.protocol.ws.common.CertificateHelper;
 
 import javax.security.auth.x500.X500Principal;
 import javax.xml.namespace.QName;
-import java.io.FileOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
 import java.net.URL;
-import java.security.*;
-import java.security.KeyStore;
-import java.security.KeyStore.PrivateKeyEntry;
-import java.security.cert.Certificate;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.KeyPair;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Iterator;
 
-public class CertKeyPFX {
-    //Crea un usuario (si es que no existe) y un certificado con su respectiva llave privada en formato PFX.
-    public static void main(String[] args) throws IOException, OperatorCreationException, CertificateException, EjbcaException_Exception, AuthorizationDeniedException_Exception, NotFoundException_Exception, UserDoesntFullfillEndEntityProfile_Exception, WaitingForApprovalException_Exception, ApprovalException_Exception, InvalidAlgorithmParameterException, KeyStoreException, NoSuchAlgorithmException {
+public class CertKeyChainPEM {
+    //Crea un usuario (si es que no existe) y un certificado con su respectiva llave privada y cadena en formato PEM.
+    public static void main(String[] args) throws IOException, InvalidAlgorithmParameterException, OperatorCreationException, CertificateException, EjbcaException_Exception, AuthorizationDeniedException_Exception, NotFoundException_Exception, UserDoesntFullfillEndEntityProfile_Exception, WaitingForApprovalException_Exception, ApprovalException_Exception {
 
         //Iniciar Conexión con EJBCA
         //================================================================================
@@ -62,32 +65,38 @@ public class CertKeyPFX {
         KeyPair keys = KeyTools.genKeys("2048", AlgorithmConstants.KEYALGORITHM_RSA);
 
         //Genera el CSR
-        PKCS10CertificationRequestBuilder p10Builder = new JcaPKCS10CertificationRequestBuilder(new X500Principal("CN=Test"), keys.getPublic());
+        PKCS10CertificationRequestBuilder p10Builder = new JcaPKCS10CertificationRequestBuilder(new X500Principal("CN=Unused"), keys.getPublic());
         JcaContentSignerBuilder csBuilder = new JcaContentSignerBuilder("SHA256withRSA");
         ContentSigner signer = csBuilder.build(keys.getPrivate());
         PKCS10CertificationRequest csr = p10Builder.build(signer);
 
-        //Envía el CSR a la CA y obtiene la respuesta en forma de certificado
-        CertificateResponse certenv =  ejbcaraws.certificateRequest(user1, new String (Base64.encode(csr.getEncoded())), CertificateHelper.CERT_REQ_TYPE_PKCS10, null, CertificateHelper.RESPONSETYPE_CERTIFICATE);
-        X509Certificate cert = certenv.getCertificate();
+        //Envía el CSR a la CA y obtiene la respuesta en forma de PKCS#7 con el certificado y la cadena
+        CertificateResponse certenv =  ejbcaraws.certificateRequest(user1, new String (Base64.encode(csr.getEncoded())), CertificateHelper.CERT_REQ_TYPE_PKCS10, null, CertificateHelper.RESPONSETYPE_PKCS7WITHCHAIN);
+        byte[] raw = certenv.getRawData();
 
-        //Convierte el certificado a un array
-        Certificate crt = (Certificate)cert;
-        Certificate[] certi = new Certificate[1];
-        certi[0] = crt;
+        InputStream in = new ByteArrayInputStream(raw);
+        CertificateFactory cf = CertificateFactory.getInstance( "X.509" );
+        Iterator it = cf.generateCertificates(in).iterator();
+        int i=0;
+        while ( it.hasNext() )
+        {
+            i++;
+            X509Certificate cert = (X509Certificate)it.next();
+            StringWriter writer = new StringWriter();
+            JcaPEMWriter pemWriter = new JcaPEMWriter(writer);
+            pemWriter.writeObject(cert);
+            pemWriter.flush();
+            pemWriter.close();
+            System.out.println("Certificate" + i + ":\n"+writer);
+        }
 
-        //Crea una entrada con la llave privada y el certificado
-        PrivateKeyEntry privateKeyEntry = new PrivateKeyEntry(keys.getPrivate(), certi);
-
-        //Crea un keystore en formato PKCS12 y lo inicializa
-        KeyStore ks = KeyStore.getInstance("PKCS12");
-        ks.load(null, null);
-
-        //Agrega la entrada al keystore con el alias y clave especificados
-        ks.setEntry("alias", privateKeyEntry, new KeyStore.PasswordProtection("keypass".toCharArray()));
-
-        //Almacena el keystore en un archivo en la ubicación y con la clave indicada
-        ks.store(new FileOutputStream("test.pfx"), "keystorepass".toCharArray());
+        //Imprime la llave privada en formato PEM
+        StringWriter writer2 = new StringWriter();
+        JcaPEMWriter pemWriter2 = new JcaPEMWriter(writer2);
+        pemWriter2.writeObject(keys.getPrivate());
+        pemWriter2.flush();
+        pemWriter2.close();
+        System.out.println("Private Key:\n"+writer2);
 
     }
 }
