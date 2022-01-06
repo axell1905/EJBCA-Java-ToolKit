@@ -36,7 +36,7 @@ public class CreateNewUser {
         //Ingresa datos de la cuenta a crear
         UserDataVOWS user = new UserDataVOWS();
         user.setEmail("axell1905@gmail.com");
-        user.setSubjectDN("CN=WSTESTUSER2,OU=10101010101,L=Lima,ST=Lima,C=PE");
+        user.setSubjectDN("CN=WSTESTUSER2,OU=10101010102,L=Lima,ST=Lima,C=PE");
         user.setCaName("EJBCA BMCert Intermediate CA");
         user.setSubjectAltName("RFC822Name=axell1905@gmail.com");
         user.setEndEntityProfileName("Persona Natural");
