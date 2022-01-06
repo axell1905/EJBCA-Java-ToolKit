@@ -72,9 +72,8 @@ public class CertKeyPFX {
         X509Certificate cert = certenv.getCertificate();
 
         //Convierte el certificado a un array
-        Certificate crt = (Certificate)cert;
         Certificate[] certi = new Certificate[1];
-        certi[0] = crt;
+        certi[0] = cert;
 
         //Crea una entrada con la llave privada y el certificado
         PrivateKeyEntry privateKeyEntry = new PrivateKeyEntry(keys.getPrivate(), certi);
@@ -84,10 +83,10 @@ public class CertKeyPFX {
         ks.load(null, null);
 
         //Agrega la entrada al keystore con el alias y clave especificados
-        ks.setEntry("alias", privateKeyEntry, new KeyStore.PasswordProtection("keypass".toCharArray()));
+        ks.setEntry("alias", privateKeyEntry, new KeyStore.PasswordProtection("pass".toCharArray()));
 
         //Almacena el keystore en un archivo en la ubicación y con la clave indicada
-        ks.store(new FileOutputStream("test.pfx"), "keystorepass".toCharArray());
+        ks.store(new FileOutputStream("test.pfx"), "pass".toCharArray());
 
     }
 }

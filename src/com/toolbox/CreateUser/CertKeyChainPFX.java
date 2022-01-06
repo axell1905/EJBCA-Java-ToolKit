@@ -17,21 +17,20 @@ import org.ejbca.core.protocol.ws.common.CertificateHelper;
 
 import javax.security.auth.x500.X500Principal;
 import javax.xml.namespace.QName;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
+import java.io.*;
 import java.net.URL;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.KeyPair;
+import java.security.*;
+import java.security.KeyStore;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.KeyStore.PrivateKeyEntry;
 import java.util.Iterator;
 
-public class CertKeyChainPEM {
-    //Crea un usuario (si es que no existe) y un certificado con su respectiva llave privada y cadena en formato PEM.
-    public static void main(String[] args) throws IOException, InvalidAlgorithmParameterException, OperatorCreationException, CertificateException, EjbcaException_Exception, AuthorizationDeniedException_Exception, NotFoundException_Exception, UserDoesntFullfillEndEntityProfile_Exception, WaitingForApprovalException_Exception, ApprovalException_Exception {
+public class CertKeyChainPFX {
+    //Crea un usuario (si es que no existe) y un certificado con su respectiva llave privada y cadena en formato PFX.
+    public static void main(String[] args) throws IOException, InvalidAlgorithmParameterException, OperatorCreationException, CertificateException, EjbcaException_Exception, AuthorizationDeniedException_Exception, NotFoundException_Exception, UserDoesntFullfillEndEntityProfile_Exception, WaitingForApprovalException_Exception, ApprovalException_Exception, KeyStoreException, NoSuchAlgorithmException {
 
         //Iniciar Conexión con EJBCA
         //================================================================================
@@ -80,16 +79,21 @@ public class CertKeyChainPEM {
         Iterator it = cf.generateCertificates(in).iterator();
         int i=0;
 
-        //Obtiene cada certificado por separado y lo imprime en pantalla
+        //Crea un array para almacenar los certificados que irán en el PFX
+        Certificate[] cadena = new Certificate[3];
+
+        //Obtiene cada certificado por separado, lo imprime en pantalla y lo almacena en el array
         while ( it.hasNext() )
         {
-            i++;
+
             X509Certificate cert = (X509Certificate)it.next();
+            cadena[i] = cert;
             StringWriter writer = new StringWriter();
             JcaPEMWriter pemWriter = new JcaPEMWriter(writer);
             pemWriter.writeObject(cert);
             pemWriter.flush();
             pemWriter.close();
+            i++;
             System.out.println("Certificate" + i + ":\n"+writer);
         }
 
@@ -100,6 +104,19 @@ public class CertKeyChainPEM {
         pemWriter2.flush();
         pemWriter2.close();
         System.out.println("Private Key:\n"+writer2);
+
+        //Crea una entrada con la llave privada, el certificado y la cadena
+        PrivateKeyEntry privateKeyEntry = new PrivateKeyEntry(keys.getPrivate(), cadena);
+
+        //Crea un keystore en formato PKCS12 y lo inicializa
+        KeyStore ks = KeyStore.getInstance("PKCS12");
+        ks.load(null, null);
+
+        //Agrega la entrada al keystore con el alias y clave especificados
+        ks.setEntry("alias", privateKeyEntry, new KeyStore.PasswordProtection("pass".toCharArray()));
+
+        //Almacena el keystore en un archivo en la ubicación y con la clave indicada
+        ks.store(new FileOutputStream("testcadena.p12"), "pass".toCharArray());
 
     }
 }
